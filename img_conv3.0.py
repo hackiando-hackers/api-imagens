@@ -109,29 +109,15 @@ def alterar_cor_pixels(imagem, pixels, nova_cor):
 
 
 
-def rgb_para_cmyk(rgb):
-    r, g, b = [x / 255 for x in rgb]  # Normaliza os valores RGB para o intervalo [0, 1]
-
-    # Calcula os valores de CMY
-    c = 1 - r
-    m = 1 - g
-    y = 1 - b
-
-    # Calcula o valor de K (chave preta)
+def rgb_to_cmyk(rgb):
+    r, g, b = rgb
+    c = 1 - (r / 255)
+    m = 1 - (g / 255)
+    y = 1 - (b / 255)
     k = min(c, m, y)
-
-    # Compensação de preto
-    c -= k
-    m -= k
-    y -= k
-
-    # Normaliza os valores de CMYK para o intervalo [0, 100]
-    c = int(c * 100)
-    m = int(m * 100)
-    y = int(y * 100)
-    k = int(k * 100)
-
-    return c, m, y, k  # Retorna valores entre 0 e 100
+    if k == 1:
+        return 0, 0, 0, 1
+    return (c - k) / (1 - k), (m - k) / (1 - k), (y - k) / (1 - k), k
 
 
 
@@ -179,8 +165,8 @@ def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
     }
 
     for nome_metodo, metodo in metodos.items():
-        imagem_temp = imagem.copy()  # Cria uma cópia da imagem original
-        converter_para_escala_de_cinza(imagem_temp, metodo)  # Aplica o método de conversão
+        imagem_temp = imagem.copy()
+        converter_para_escala_de_cinza(imagem_temp, metodo) 
         novo_nome_arquivo = nome_arquivo + f"_convertido_{nome_metodo.replace(' ', '_').lower()}.png"
         imagem_temp.save(novo_nome_arquivo)
         print(f"Imagem convertida para escala de cinza ({nome_metodo}) e salva como: {novo_nome_arquivo}")
@@ -311,51 +297,25 @@ def main():
 
         if opcao == "1":
             # Código de conversão para CMYK
-            largura, altura = imagem.size
-            for y in range(altura):
-                for x in range(largura):
-                    pixel = imagem.getpixel((x, y))
-                    nova_cor_cmyk = rgb_para_cmyk(pixel)
-                    imagem.putpixel((x, y), nova_cor_cmyk)
+            img = Image.open(caminho_imagem)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
 
-            novo_nome_arquivo = nome_arquivo + "_convertido_cmyk.png"
-            imagem.save(novo_nome_arquivo)
-            print(f"Imagem convertida para CMYK e salva como: {novo_nome_arquivo}")
+            cmyk_img = Image.new('CMYK', img.size)
+            pixels = cmyk_img.load()
+
+            for i in range(img.size[0]):
+                for j in range(img.size[1]):
+                    rgb = img.getpixel((i, j))
+                    cmyk = rgb_to_cmyk(rgb)
+                    pixels[i, j] = tuple(int(255 * x) for x in cmyk)
+
+            cmyk_img.save("output_cmyk.jpg")
+            print("imagem convertida com sucesso para CMYK")
+
         elif opcao == "2":
             # Código de conversão para escala de cinza...
-            print("Selecione um método de conversão para escala de cinza:")
-            print("1. Média Ponderada\n2. Luminosidade\n3. Dessaturação\n4. Decomposição de Cores (Máximo)\n5. Decomposição de Cores (Mínimo)\n6. Usar todos os métodos de conversão")
-            escolha_metodo = input("Opção: ")
-
-            if escolha_metodo == "1":
-                # Código para média ponderada...
-                novo_nome_arquivo = nome_arquivo + "_convertido_media_ponderada.png"
-                imagem.save(novo_nome_arquivo)
-                print(f"Imagem convertida para escala de cinza (Média Ponderada) e salva como: {novo_nome_arquivo}")
-            elif escolha_metodo == "2":
-                # Código para luminosidade...
-                novo_nome_arquivo = nome_arquivo + "_convertido_luminosidade.png"
-                imagem.save(novo_nome_arquivo)
-                print(f"Imagem convertida para escala de cinza (Luminosidade) e salva como: {novo_nome_arquivo}")
-            elif escolha_metodo == "3":
-                # Código para dessaturação...
-                novo_nome_arquivo = nome_arquivo + "_convertido_dessaturacao.png"
-                imagem.save(novo_nome_arquivo)
-                print(f"Imagem convertida para escala de cinza (Dessaturação) e salva como: {novo_nome_arquivo}")
-            elif escolha_metodo == "4":
-                # Código para decomposição de cores (máximo)...
-                novo_nome_arquivo = nome_arquivo + "_convertido_maximo.png"
-                imagem.save(novo_nome_arquivo)
-                print(f"Imagem convertida para escala de cinza (Decomposição de Cores - Máximo) e salva como: {novo_nome_arquivo}")
-            elif escolha_metodo == "5":
-                # Código para decomposição de cores (mínimo)...
-                novo_nome_arquivo = nome_arquivo + "_convertido_minimo.png"
-                imagem.save(novo_nome_arquivo)
-                print(f"Imagem convertida para escala de cinza (Decomposição de Cores - Mínimo) e salva como: {novo_nome_arquivo}")
-            elif escolha_metodo == "6":
                 converter_todos_para_escala_de_cinza(imagem, nome_arquivo)
-            else:
-                print("Opção inválida.")
                 return
     elif opcao_parte3 == 'n':
         print("Você optou por pular a Parte 3.")
