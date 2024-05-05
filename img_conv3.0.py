@@ -108,7 +108,7 @@ def alterar_cor_pixels(imagem, pixels, nova_cor):
 
 
 
-
+#CONVERSOR DE RGB PARA CMYK
 def rgb_to_cmyk(rgb):
     r, g, b = rgb
     c = 1 - (r / 255)
@@ -122,7 +122,7 @@ def rgb_to_cmyk(rgb):
 
 
 
-
+#FUNÇÕES DE CONVERSÃO DE RGB PARA ESCALAS DE CINZA
 def rgb_para_escala_de_cinza_media_ponderada(rgb):
     r, g, b = rgb
     y = 0.299 * r + 0.587 * g + 0.114 * b
@@ -154,6 +154,7 @@ def converter_para_escala_de_cinza(imagem, metodo):
             nova_cor = metodo(pixel)
             imagem.putpixel((x, y), nova_cor)
 
+#FUNÇÃO QUE USA CADA METODO DE CONVERSÃO DE CINZA E CONVERTE TODOS DE UMA VEZ
 def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
     # Métodos de conversão de escala de cinza
     metodos = {
@@ -171,6 +172,8 @@ def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
         imagem_temp.save(novo_nome_arquivo)
         print(f"Imagem convertida para escala de cinza ({nome_metodo}) e salva como: {novo_nome_arquivo}")
 
+
+#NOVA ALTERAÇÃO NA PARTE 3
 def main():
     imagem = None 
 
@@ -272,6 +275,7 @@ def main():
             print("Opção inválida.")
             return
 
+    #PARTE 3 (CONVERSÃO DE RGB PARA CMYK E PARA ESCALAS DE CINZA)
     opcao_parte3 = input("Deseja executar a Parte 3 (Converter imagem para CMYK ou escala de cinza)? (s/n): ").lower()
     print("PARTE 3: CONVERSÃO DE RGB PARA CMYK OU ESCALA DE CINZA")
     time.sleep(1.5)
