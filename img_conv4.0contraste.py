@@ -5,6 +5,8 @@ from openpyxl import Workbook
 import time
 import colorsys
 from PIL import ImageEnhance
+import cv2
+import numpy as np
 
 CORES = {
     "1": {"nome": "Vermelho", "valor": (255, 0, 0)},
@@ -149,14 +151,14 @@ def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
         print(f"Imagem convertida para escala de cinza ({nome_metodo}) e salva como: {novo_nome_arquivo}")
 
 
-
-def aumentar_contraste(imagem):
+#FUNÇÃO PARA AUMENTAR CONTRASTE DE IMAGEM EM ESCALA DE CINZA
+def aumentar_contraste_escala_cinza(imagem):
     largura, altura = imagem.size
 
     if imagem.mode != 'L':
         imagem = imagem.convert('L')
 
-
+    #CALCULO HISTOGRAMA
     histograma = [0]*256
     for y in range(altura):
         for x in range(largura):
@@ -166,9 +168,10 @@ def aumentar_contraste(imagem):
     total_pixels = altura*largura
     frequencias_normalizadas = [freq/total_pixels for freq in histograma]
 
-    #calcular cdf
+    #CALCULO CDF
     cdf = [sum(frequencias_normalizadas[:i+1]) for i in range(256)]
 
+    #CALCULO IMAGEM FINAL
     for y in range(altura):
         for x in range(largura):
             intensidade = imagem.getpixel((x,y))
@@ -179,6 +182,14 @@ def aumentar_contraste(imagem):
             
 
 
+#FUNÇÃO PARA AUMENTAR CONTRASTE DE IMAGEM COLORIDA
+def aumentar_contraste_colorido(imagem, alpha=1.0, beta=0.0):
+    # Aplicando a transformação de contraste
+    nova_imagem = np.clip(alpha * imagem + beta, 0, 255).astype(np.uint8)
+    return nova_imagem
+
+
+#ALTERAÇÃO NAS PARTES 4 E 5
 def main():
     imagem = None 
 
@@ -331,10 +342,10 @@ def main():
     else:
         print("Opção inválida.")
 
-    #PARTE 4 (AUMENTAR)
-    opcao_parte4 = input("Deseja executar a Parte 4 (Aumentar o contraste da imagem)? (s/n): ").lower()
+    #PARTE 4 (AUMENTAR CONTRASTE EM ESCALA CINZA)
+    opcao_parte4 = input("Deseja executar a Parte 4 (Aumentar o contraste da imagem em escala cinza)? (s/n): ").lower()
     if opcao_parte4 == 's':
-        print("PARTE 4: AUMENTAR O CONTRASTE DAS IMAGENS")
+        print("PARTE 4: AUMENTAR O CONTRASTE DAS IMAGENS EM ESCALA DE CINZA")
         nome_arquivo = input("Digite o nome do arquivo de imagem (sem o formato): ")
         caminho_png = nome_arquivo + ".png"
         caminho_jpg = nome_arquivo + ".jpg"
@@ -354,10 +365,10 @@ def main():
                 raise ValueError("O fator de contraste deve ser maior que zero.")
 
 
-            imagem = aumentar_contraste(imagem)
-            nome_arquivo_contraste = nome_arquivo + "_contraste_aumentado.png"
-            imagem.save(nome_arquivo_contraste)
-            print(f"Imagem com contraste aumentado salva como: {nome_arquivo_contraste}")
+            imagem = aumentar_contraste_escala_cinza(imagem)
+            nome_arquivo_contraste_escala_cinza = nome_arquivo + "_contraste_aumentado.png"
+            imagem.save(nome_arquivo_contraste_escala_cinza)
+            print(f"Imagem com contraste aumentado salva como: {nome_arquivo_contraste_escala_cinza}")
         except ValueError as ve:
             print("Erro", ve)
     elif opcao_parte4 == 'n':
@@ -365,6 +376,41 @@ def main():
     else:
         print("Opção inválida")
 
+
+    # PARTE 5 (AUMENTAR O CONTRASTE DA IMAGEM COLORIDA)
+    opcao_parte5 = input("Deseja executar a Parte 5 (Aumentar o contraste da imagem colorida)? (s/n): ").lower()
+    if opcao_parte5 == 's':
+        print("PARTE 5: AUMENTAR O CONTRASTE DAS IMAGENS COLORIDAS")
+        nome_arquivo = input("Digite o nome do arquivo de imagem (sem o formato): ")
+        caminho_png = nome_arquivo + ".png"
+        caminho_jpg = nome_arquivo + ".jpg"
+        if os.path.exists(caminho_png):
+            caminho_imagem = caminho_png
+        elif os.path.exists(caminho_jpg):
+            caminho_imagem = caminho_jpg
+        else:
+            print("Arquivo não encontrado.")
+            exit()
+        def carregar_imagem(caminho):
+            imagem = cv2.imread(caminho)
+            if imagem is None:
+                print("Erro ao carregar a imagem.")
+                return None
+            else:
+                return imagem
+        imagem = carregar_imagem(caminho_imagem)
+    if imagem is not None:
+        try:
+            imagem = aumentar_contraste_colorido(imagem, alpha=1.5, beta=10)
+            nome_arquivo_contraste_rgb = nome_arquivo + "_contraste_aumentado_colorido.png"
+            cv2.imwrite(nome_arquivo_contraste_rgb, imagem)
+            print(f"Imagem com contraste aumentado salva como: {nome_arquivo_contraste_rgb}")
+        except Exception as e:
+            print("Erro:", e)
+    elif opcao_parte5 == 'n':
+        print("Você optou por pular a Parte 5.")
+    else:
+        print("Opção inválida")
 
 
 if __name__ == "__main__":
