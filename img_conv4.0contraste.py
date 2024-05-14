@@ -4,6 +4,9 @@ import os
 from openpyxl import Workbook
 import time
 import colorsys
+from PIL import ImageEnhance
+import cv2
+import numpy as np
 
 CORES = {
     "1": {"nome": "Vermelho", "valor": (255, 0, 0)},
@@ -122,29 +125,10 @@ def rgb_to_cmyk(rgb):
 
 
 
-#FUNÇÕES DE CONVERSÃO DE RGB PARA ESCALAS DE CINZA
-def rgb_para_escala_de_cinza_media_ponderada(rgb):
-    r, g, b = rgb
-    y = 0.299 * r + 0.587 * g + 0.114 * b
-    return int(y), int(y), int(y)
-
-def rgb_para_escala_de_cinza_luminosidade(rgb):
-    r, g, b = rgb
-    y = 0.21 * r + 0.72 * g + 0.07 * b
-    return int(y), int(y), int(y)
-
-def rgb_para_escala_de_cinza_dessaturacao(rgb):
-    r, g, b = rgb
-    y = (r + g + b) / 3
-    return int(y), int(y), int(y)
 
 def rgb_para_escala_de_cinza_maximo(rgb):
     max_value = max(rgb)
     return max_value, max_value, max_value
-
-def rgb_para_escala_de_cinza_minimo(rgb):
-    min_value = min(rgb)
-    return min_value, min_value, min_value
 
 def converter_para_escala_de_cinza(imagem, metodo):
     largura, altura = imagem.size
@@ -154,15 +138,9 @@ def converter_para_escala_de_cinza(imagem, metodo):
             nova_cor = metodo(pixel)
             imagem.putpixel((x, y), nova_cor)
 
-#FUNÇÃO QUE USA CADA METODO DE CONVERSÃO DE CINZA E CONVERTE TODOS DE UMA VEZ
 def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
-    # Métodos de conversão de escala de cinza
     metodos = {
-        "Média Ponderada": rgb_para_escala_de_cinza_media_ponderada,
-        "Luminosidade": rgb_para_escala_de_cinza_luminosidade,
-        "Dessaturação": rgb_para_escala_de_cinza_dessaturacao,
-        "Decomposição de Cores (Máximo)": rgb_para_escala_de_cinza_maximo,
-        "Decomposição de Cores (Mínimo)": rgb_para_escala_de_cinza_minimo
+        "Decomposição de Cores (Máximo)": rgb_para_escala_de_cinza_maximo
     }
 
     for nome_metodo, metodo in metodos.items():
@@ -173,29 +151,45 @@ def converter_todos_para_escala_de_cinza(imagem, nome_arquivo):
         print(f"Imagem convertida para escala de cinza ({nome_metodo}) e salva como: {novo_nome_arquivo}")
 
 
-
-def aumentar_contraste_escala_de_cinza(imagem, fator=1.5):
+#FUNÇÃO PARA AUMENTAR CONTRASTE DE IMAGEM EM ESCALA DE CINZA
+def aumentar_contraste_escala_cinza(imagem):
     largura, altura = imagem.size
-    nova_imagem = Image.new("RGB", (largura, altura))
 
+    if imagem.mode != 'L':
+        imagem = imagem.convert('L')
+
+    #CALCULO HISTOGRAMA
+    histograma = [0]*256
     for y in range(altura):
         for x in range(largura):
-            pixel = imagem.getpixel((x, y))
-            novo_pixel = tuple(int(max(0, min(255, (valor - 128) * fator + 128))) for valor in pixel)
-            nova_imagem.putpixel((x, y), novo_pixel)
+            intensidade = imagem.getpixel((x,y))
+            histograma[intensidade] += 1
 
+    total_pixels = altura*largura
+    frequencias_normalizadas = [freq/total_pixels for freq in histograma]
+
+    #CALCULO CDF
+    cdf = [sum(frequencias_normalizadas[:i+1]) for i in range(256)]
+
+    #CALCULO IMAGEM FINAL
+    for y in range(altura):
+        for x in range(largura):
+            intensidade = imagem.getpixel((x,y))
+            novo_valor = int(cdf[intensidade]*255)
+            imagem.putpixel((x,y), novo_valor)
+    
+    return imagem
+            
+
+
+#FUNÇÃO PARA AUMENTAR CONTRASTE DE IMAGEM COLORIDA
+def aumentar_contraste_colorido(imagem, alpha=1.0, beta=0.0):
+    # Aplicando a transformação de contraste
+    nova_imagem = np.clip(alpha * imagem + beta, 0, 255).astype(np.uint8)
     return nova_imagem
 
-def salvar_imagem_com_contraste_aumentado(imagem, nome_arquivo):
-    novo_nome_arquivo = nome_arquivo + "_contraste_aumentado.png"
-    imagem.save(novo_nome_arquivo)
-    print(f"Imagem com contraste aumentado salva como: {novo_nome_arquivo}")
 
-
-
-
-
-#NOVA ALTERAÇÃO NA PARTE 3
+#ALTERAÇÃO NAS PARTES 4 E 5
 def main():
     imagem = None 
 
@@ -299,9 +293,9 @@ def main():
 
     #PARTE 3 (CONVERSÃO DE RGB PARA CMYK E PARA ESCALAS DE CINZA)
     opcao_parte3 = input("Deseja executar a Parte 3 (Converter imagem para CMYK ou escala de cinza)? (s/n): ").lower()
-    print("PARTE 3: CONVERSÃO DE RGB PARA CMYK OU ESCALA DE CINZA")
     time.sleep(1.5)
     if opcao_parte3 == 's':
+        print("PARTE 3: CONVERSÃO DE RGB PARA CMYK OU ESCALA DE CINZA")
         if not imagem:  
             nome_arquivo = input("Digite o nome do arquivo de imagem (sem o formato): ")
             caminho_png = nome_arquivo + ".png"
@@ -340,17 +334,84 @@ def main():
             print("imagem convertida com sucesso para CMYK")
 
         elif opcao == "2":
-            converter_todos_para_escala_de_cinza(imagem, nome_arquivo)
-            nome_arquivo_convertido = nome_arquivo + "_convertido_decomposicao_de_cores_(maximo).png"  # Altere o nome do arquivo conforme necessário
-            imagem_convertida = Image.open(nome_arquivo_convertido)
-            imagem_com_contraste = aumentar_contraste_escala_de_cinza(imagem_convertida)
-            salvar_imagem_com_contraste_aumentado(imagem_com_contraste, nome_arquivo)
-            return
+            # Código de conversão para escala de cinza...
+                converter_todos_para_escala_de_cinza(imagem, nome_arquivo)
     elif opcao_parte3 == 'n':
         print("Você optou por pular a Parte 3.")
         time.sleep(1.5)
     else:
         print("Opção inválida.")
+
+    #PARTE 4 (AUMENTAR CONTRASTE EM ESCALA CINZA)
+    opcao_parte4 = input("Deseja executar a Parte 4 (Aumentar o contraste da imagem em escala cinza)? (s/n): ").lower()
+    if opcao_parte4 == 's':
+        print("PARTE 4: AUMENTAR O CONTRASTE DAS IMAGENS EM ESCALA DE CINZA")
+        nome_arquivo = input("Digite o nome do arquivo de imagem (sem o formato): ")
+        caminho_png = nome_arquivo + ".png"
+        caminho_jpg = nome_arquivo + ".jpg"
+        if os.path.exists(caminho_png):
+            caminho_imagem = caminho_png
+        elif os.path.exists(caminho_jpg):
+            caminho_imagem = caminho_jpg
+        else:
+            print("Arquivo não encontrado.")
+            return
+        imagem = carregar_imagem(caminho_imagem)
+        if not imagem:
+            return
+        try:
+            fator_contraste = float(input("Digite o fator de contraste desejado (por exemplo, 1.5): "))
+            if fator_contraste <= 0:
+                raise ValueError("O fator de contraste deve ser maior que zero.")
+
+
+            imagem = aumentar_contraste_escala_cinza(imagem)
+            nome_arquivo_contraste_escala_cinza = nome_arquivo + "_contraste_aumentado.png"
+            imagem.save(nome_arquivo_contraste_escala_cinza)
+            print(f"Imagem com contraste aumentado salva como: {nome_arquivo_contraste_escala_cinza}")
+        except ValueError as ve:
+            print("Erro", ve)
+    elif opcao_parte4 == 'n':
+        print("Você optou por pular a Parte 4.")
+    else:
+        print("Opção inválida")
+
+
+    # PARTE 5 (AUMENTAR O CONTRASTE DA IMAGEM COLORIDA)
+    opcao_parte5 = input("Deseja executar a Parte 5 (Aumentar o contraste da imagem colorida)? (s/n): ").lower()
+    if opcao_parte5 == 's':
+        print("PARTE 5: AUMENTAR O CONTRASTE DAS IMAGENS COLORIDAS")
+        nome_arquivo = input("Digite o nome do arquivo de imagem (sem o formato): ")
+        caminho_png = nome_arquivo + ".png"
+        caminho_jpg = nome_arquivo + ".jpg"
+        if os.path.exists(caminho_png):
+            caminho_imagem = caminho_png
+        elif os.path.exists(caminho_jpg):
+            caminho_imagem = caminho_jpg
+        else:
+            print("Arquivo não encontrado.")
+            exit()
+        def carregar_imagem(caminho):
+            imagem = cv2.imread(caminho)
+            if imagem is None:
+                print("Erro ao carregar a imagem.")
+                return None
+            else:
+                return imagem
+        imagem = carregar_imagem(caminho_imagem)
+    if imagem is not None:
+        try:
+            imagem = aumentar_contraste_colorido(imagem, alpha=1.5, beta=10)
+            nome_arquivo_contraste_rgb = nome_arquivo + "_contraste_aumentado_colorido.png"
+            cv2.imwrite(nome_arquivo_contraste_rgb, imagem)
+            print(f"Imagem com contraste aumentado salva como: {nome_arquivo_contraste_rgb}")
+        except Exception as e:
+            print("Erro:", e)
+    elif opcao_parte5 == 'n':
+        print("Você optou por pular a Parte 5.")
+    else:
+        print("Opção inválida")
+
 
 if __name__ == "__main__":
     main()
