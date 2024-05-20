@@ -1,0 +1,147 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+}
+
+main {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+#steps {
+    width: 30%;
+}
+
+#preview {
+    width: 65%;
+    border: 1px solid #ccc;
+    padding: 20px;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+#picture__input {
+    display: none;
+}
+
+.picture {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    border: 2px dashed currentcolor;
+    cursor: pointer;
+    font-family: sans-serif;
+    transition: color 300ms ease-in-out, background 300ms ease-in-out;
+    outline: none;
+    overflow: hidden;
+}
+
+.picture:hover {
+    color: #777;
+    background: #ccc;
+}
+
+.picture:active {
+    border-color: turquoise;
+    color: turquoise;
+    background: #eee;
+}
+
+.picture:focus {
+    color: #777;
+    background: #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.picture__img {
+    max-width: 100%;
+}
+
+/* Adicionando estilos para o arrasto de imagens */
+.picture.dragover {
+    background-color: #f0f0f0;
+    border-color: #999;
+}
+
+.picture.dragover .picture__image {
+    opacity: 0.5;
+}
+
+
+/* Adicione estilos para os botões inativos */
+#steps button[disabled] {
+    background-color: #f0f0f0;
+    color: #aaa;
+    cursor: not-allowed;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    outline: none;
+    transition: background-color 0.3s ease;
+}
+
+#steps button[disabled]:hover {
+    background-color: #f0f0f0;
+}
+
+#steps button[disabled]:focus {
+    box-shadow: none;
+}
+
+#steps button[disabled]:active {
+    background-color: #f0f0f0;
+}
+
+/* Estilos para os botões ativados */
+#steps button:not([disabled]) {
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+    border: 1px solid #007bff;
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    outline: none;
+    transition: background-color 0.3s ease;
+}
+
+#steps button:not([disabled]):hover {
+    background-color: #0056b3;
+}
+
+#steps button:not([disabled]):focus {
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+#steps button:not([disabled]):active {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}

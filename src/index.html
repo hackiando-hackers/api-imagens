@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface de Processamento de Imagens</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Interface de Processamento de Imagens</h1>
+    </header>
+    <main>
+        <section id="steps">
+            <!-- Botões inativos para as funções -->
+            <button id="convertToExcel" disabled>Converter em matriz no Excel</button>
+            <button id="modifyColors" disabled>Modificar cores da imagem</button>
+            <button id="convertToCMYK" disabled>Converter RGB em CMYK</button>
+            <button id="convertToGrayScale" disabled>Converter RGB em escalas de cinza</button>
+            <button id="increaseColorContrast" disabled>Aumentar o contraste RGB</button>
+            <button id="increaseGrayContrast" disabled>Aumentar o contraste Cinza</button>
+            <button id="noRed" disabled>Remover Vermelho</button>
+            <button id="noGreen" disabled>Remover Verde</button>
+            <button id="noBlue" disabled>Remover Azul</button>
+            <button id="Blur" disabled>Blur</button>
+            <button id="Reset" disabled>Resetar Imagem</button>
+        </section>
+        <section id="preview">
+            <!-- Aqui será exibida a imagem após o processamento -->
+            <label class="picture" for="picture__input" tabindex="0">
+                <span class="picture__image"></span>
+            </label>
+            <input type="file" name="picture__input" id="picture__input">
+        </section>
+    </main>
+    <footer>
+        <p>Desenvolvido por Davi Santos, Eduarda Souza</p>
+    </footer>
+    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+
+</body>
+</html>
